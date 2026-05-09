@@ -1,0 +1,58 @@
+{
+  "updatedAt": 1778320873606,
+  "categories": {},
+  "agents": {},
+  "tools": {},
+  "adapters": {},
+  "failureKinds": {},
+  "background": {
+    "queued": 0,
+    "completed": 0,
+    "failed": 6,
+    "cancelled": 0
+  },
+  "recent": [
+    {
+      "kind": "background",
+      "label": "fixer:pantheon_qanr0jci",
+      "status": "failed",
+      "ts": 1778320209280,
+      "failureKind": "background"
+    },
+    {
+      "kind": "background",
+      "label": "fixer:pantheon_60cx0tmu",
+      "status": "failed",
+      "ts": 1778320209280,
+      "failureKind": "background"
+    },
+    {
+      "kind": "background",
+      "label": "fixer:pantheon_qanr0jci",
+      "status": "failed",
+      "ts": 1778320583512,
+      "failureKind": "background"
+    },
+    {
+      "kind": "background",
+      "label": "fixer:pantheon_60cx0tmu",
+      "status": "failed",
+      "ts": 1778320583512,
+      "failureKind": "background"
+    },
+    {
+      "kind": "background",
+      "label": "fixer:pantheon_qanr0jci",
+      "status": "failed",
+      "ts": 1778320873606,
+      "failureKind": "background"
+    },
+    {
+      "kind": "background",
+      "label": "fixer:pantheon_60cx0tmu",
+      "status": "failed",
+      "ts": 1778320873606,
+      "failureKind": "background"
+    }
+  ]
+}
