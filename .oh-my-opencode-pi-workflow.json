@@ -1,6 +1,6 @@
 {
-  "updatedAt": 1778320758293,
+  "updatedAt": 1778321309925,
   "uncheckedTodos": [],
-  "lastAgentSummary": "Let me explore project structure and reference implementation. Already has `/opencode-go-key` command. But missing Pi `auth.json` sync (like sumopod). Also need npm publish prep. **Issues:** 1. `setOpencodeGoApiKey` only writes to `~/.local/share/opencode/auth.json` — needs Pi `auth.json` too 2. Package.json missing `main`, `types` fields for npm Done. Changes made: **`setOpencodeGoApiKey()`** now writes to **both**: - `~/.local/share/opencode/auth.json` — opencode CLI native format - `~/.pi/agent/auth.json` — Pi's AuthStorage format (so Pi picks it up without restart) **`/opencode-go-key`** command already existed. Usage: ``` /opencode-go-key sk-xxxx # direct /opencode-go-key # interactive prompt ``` **To publish to npm:** ```bash cd /Users/yu/Spaces/pi-provider-opencode npm publish --access public ``` Before publish, bump version in `package.json` if needed — currently `0.2.0`.",
+  "lastAgentSummary": "Ready to publish. Current state: - `pi-opencode-bridge@0.2.0` — name already set - `/opencode-go-key` — working, saves to both auth locations - `/opencode-status` — renamed from `/oc-status` - `/opencode-connect` — removed (reserved for v0.3.0) Publish command: ```bash cd /Users/yu/Spaces/pi-provider-opencode npm publish --access public ```",
   "recentBackgroundTaskIds": []
 }

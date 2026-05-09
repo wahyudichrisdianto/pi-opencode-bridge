@@ -2,7 +2,7 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { existsSync, readFileSync, writeFileSync, mkdirSync, chmodSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-import { spawn } from "child_process";
+
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -101,15 +101,6 @@ function getAuthStatus(): { go: boolean; zen: boolean } {
 	};
 }
 
-function runOpenCodeLogin(): Promise<number> {
-	return new Promise((resolve) => {
-		const child = spawn("opencode", ["auth", "login"], {
-			stdio: "inherit",
-		});
-		child.on("close", (code) => resolve(code ?? 0));
-		child.on("error", () => resolve(1));
-	});
-}
 
 // ---------------------------------------------------------------------------
 // Model discovery
@@ -246,56 +237,7 @@ export default function (pi: ExtensionAPI) {
 
 	g[REG_KEY] = true;
 
-	// --- Commands ---
-	pi.registerCommand("oc-login", {
-		description: "Log in to OpenCode via CLI (authenticates all plans)",
-		handler: async (_args, ctx) => {
-			const statusBefore = getAuthStatus();
-			ctx.ui.notify("Running: opencode auth login", "info");
 
-			const exitCode = await runOpenCodeLogin();
-			if (exitCode !== 0) {
-				ctx.ui.notify(
-					"Login failed. Make sure 'opencode' CLI is installed: npm install -g opencode",
-					"error",
-				);
-				return;
-			}
-
-			// Refresh provider registration after login
-			const { go, zen } = discoverModels();
-			const goKey = resolveApiKey("opencode-go");
-			const zenKey = resolveApiKey("opencode");
-
-			if (goKey && go.length > 0) {
-				pi.registerProvider(GO_PROVIDER, {
-					apiKey: goKey,
-					api: "openai-completions" as const,
-					baseUrl: GO_BASE_URL,
-					models: buildPiModels(go, GO_PROVIDER),
-				});
-			}
-			if (zenKey && zen.length > 0) {
-				pi.registerProvider(ZEN_PROVIDER, {
-					apiKey: zenKey,
-					api: "openai-completions" as const,
-					baseUrl: ZEN_BASE_URL,
-					models: buildPiModels(zen, ZEN_PROVIDER),
-				});
-			}
-
-			const statusAfter = getAuthStatus();
-			const newlyGo = !statusBefore.go && statusAfter.go;
-			const newlyZen = !statusBefore.zen && statusAfter.zen;
-			if (newlyGo || newlyZen) {
-				ctx.ui.notify("OpenCode login successful — providers registered", "success");
-			} else if (!statusAfter.go && !statusAfter.zen) {
-				ctx.ui.notify("Login completed but no API key found", "warning");
-			} else {
-				ctx.ui.notify("OpenCode login refreshed", "info");
-			}
-		},
-	});
 
 	pi.registerCommand("opencode-go-key", {
 		description: "Set your OpenCode Go API key directly (no CLI required)",
@@ -327,7 +269,7 @@ export default function (pi: ExtensionAPI) {
 			ctx.ui.notify("OpenCode Go API key saved and active!", "info");
 		},
 	});
-	pi.registerCommand("oc-status", {
+	pi.registerCommand("opencode-status", {
 		description: "Check OpenCode authentication status",
 		handler: async (_args, ctx) => {
 			const status = getAuthStatus();
