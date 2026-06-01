@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync, writeFileSync, mkdirSync, chmodSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
@@ -46,12 +46,10 @@ function resolveApiKey(provider: string): string | undefined {
 		if (!existsSync(p)) continue;
 		try {
 			const auth = JSON.parse(readFileSync(p, "utf-8"));
-			// Try provider-specific key first
+			// Only the requested provider's key — no cross-provider fallback,
+			// else Zen would falsely authenticate with the Go key.
 			const key = auth?.[provider]?.key;
 			if (key) return key;
-			// Fallback to opencode-go key
-			const fallback = auth?.["opencode-go"]?.key;
-			if (fallback) return fallback;
 		} catch { /* try next */ }
 	}
 
@@ -161,9 +159,14 @@ function buildPiModels(rawModels: RawModel[], provider: string): any[] {
 		const mods = (m.meta.modalities ?? {}) as Record<string, string[]>;
 		const family = (m.meta.family as string) || "";
 
-		// Compat: DeepSeek and kimi models need reasoning_content replay
-		const needsReasoningCompat =
-			family.includes("deepseek") || family.includes("kimi");
+		// Compat: DeepSeek and Kimi need reasoning_content replayed on tool-call turns.
+		const isDeepseek = family.includes("deepseek");
+		const isKimi = family.includes("kimi");
+
+		// Pi accepts only "text" | "image" inputs; the registry also lists video/pdf/audio.
+		const input = (mods.input ?? ["text"]).filter(
+			(x) => x === "text" || x === "image",
+		);
 
 		return {
 			id: m.id,
@@ -171,25 +174,24 @@ function buildPiModels(rawModels: RawModel[], provider: string): any[] {
 			api: "openai-completions",
 			provider,
 			baseUrl: m.baseUrl,
-			contextWindow:
-				(limit.context as number) ?? (limit.maxInput as number) ?? 204800,
-			maxTokens: (limit.output as number) ?? (limit.maxOutput as number) ?? 131072,
-			maxOutput: (limit.output as number) ?? (limit.maxOutput as number) ?? 131072,
+			contextWindow: (limit.context as number) ?? 204800,
+			maxTokens: (limit.output as number) ?? 131072,
 			reasoning: (m.meta.reasoning as boolean) ?? false,
 			cost: {
 				input: (cost.input as number) ?? 0,
 				output: (cost.output as number) ?? 0,
-				cacheRead: (cost.cacheRead as number) ?? 0,
-				cacheWrite: (cost.cacheWrite as number) ?? 0,
+				cacheRead: (cost.cache_read as number) ?? 0,
+				cacheWrite: (cost.cache_write as number) ?? 0,
 			},
-			input: mods.input ?? ["text"],
-			...(needsReasoningCompat
+			input: input.length > 0 ? input : ["text"],
+			...(isDeepseek || isKimi
 				? {
 					compat: {
-						requiresReasoningContentOnAssistantMessages: true,
-						thinkingFormat: family.includes("deepseek")
-							? "deepseek"
-							: undefined,
+						requiresReasoningContentForToolCalls: true,
+						...(isKimi ? { thinkingFormat: "zai" as const } : {}),
+						...(isDeepseek
+							? { allowsSyntheticReasoningContentForToolCalls: false }
+							: {}),
 					},
 				}
 				: {}),
@@ -275,8 +277,8 @@ export default function (pi: ExtensionAPI) {
 			const status = getAuthStatus();
 			const lines = [
 				"OpenCode Auth Status:",
-				`  Go plan:  ${status.go ? "✅ authenticated" : "❌ not set — run /oc-login"}`,
-				`  Zen plan: ${status.zen ? "✅ authenticated" : "❌ not set — run /oc-login"}`,
+				`  Go plan:  ${status.go ? "✅ authenticated" : "❌ not set — run /opencode-go-key"}`,
+				`  Zen plan: ${status.zen ? "✅ authenticated" : "❌ not set — add the \"opencode\" key to auth.json (no setter command yet)"}`,
 			];
 			ctx.ui.notify(lines.join("\n"), "info");
 		},
