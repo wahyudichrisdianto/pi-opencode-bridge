@@ -1,6 +1,6 @@
 {
   "name": "pi-opencode-bridge",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "description": "OpenCode provider for Pi Agent. Auto-discovers models from OpenCode registry and uses Pi's native OpenAI-compatible handler.",
   "keywords": [
